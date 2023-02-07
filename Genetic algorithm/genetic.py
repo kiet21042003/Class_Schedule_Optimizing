@@ -2,8 +2,6 @@ import numpy as np
 import random
 import copy
 import time
-import random
-
 '''# Define the number of classes and rooms
 N = 10
 M = 4
@@ -34,8 +32,8 @@ days = 5
 shifts = 12
 
 # Define the genetic algorithm parameters
-population_size = 200 #population_size is the number of individuals that make up one generation
-generations = 1000 #generations is the number of times the genetic algorithm goes through the process of creating a new generation.
+population_size = 5 #population_size is the number of individuals that make up one generation
+generations =5 #generations is the number of times the genetic algorithm goes through the process of creating a new generation.
 crossover_rate=0.8
 mutation_rate=0.11
 
@@ -56,7 +54,7 @@ def fitness(individual):
     # Check if the number of students is greater than the capacity of the room
     
     # Check if the teacher has classes at the same time
-    for i in range(len(individual)):
+    for i in range(len(individual)-1):
         for j in range(i + 1, len(individual)):
             for q in range(t[i]):
                 for k in range(t[j]):
@@ -66,7 +64,7 @@ def fitness(individual):
                             fit -= 1
                         if individual[i][q][2] == individual[j][k][2]:
                             fit -= 1
-        for s1 in range(t[i]):
+        for s1 in range(t[i]-1):
             for s2 in range(s1+1,t[i]):
                 if individual[i][s1][0]==individual[i][s2][0] and individual[i][s1][1]==individual[i][s2][1]:
                     fit-=1
@@ -100,6 +98,7 @@ def create_individual(N, days, shifts, M):
     #individual[i] has t[i] elements, each element individual[i][0] is [day,shift,room] for lesson q.
     individual=[]
     has_been_assigned=set()
+    
     for i in range(N): #set lessons for class[i]:
         class_lesson=[]
         for j in range(t[i]): #for j in range number of lessons:
@@ -112,6 +111,31 @@ def create_individual(N, days, shifts, M):
             class_lesson.append([day,shift,room]) 
             #this function means that the lesson j will take on (day,shift,room)
         individual.append(class_lesson)    
+    '''schedule_info1 = [[[0 for room in range(M)] for shift in range(shifts)] for day in range(days)]
+    
+    for i in range(len(individual)):
+        for j in range(t[i]):
+            room = -1
+            for k in range(M):
+                if c[k] >= s[i]:
+                    day, shift = individual[i][j][0], individual[i][j][1]
+                    if schedule_info1[day][shift][k] == 0:
+                        room = k
+                        break
+            if room == -1:
+                    
+                iter=10
+                max_iter=100
+                while True:
+                    iter+=1
+                    if iter==max_iter:
+                        break
+                    day, shift = random.randint(0, days - 1), random.randint(0, shifts - 1)
+                    room = random.randint(0, M - 1)
+                    if c[room] >= s[i] and schedule_info1[day][shift][room] == 0:
+                        break
+            individual[i][j] = day, shift, room
+            schedule_info1[day][shift][room] = 1''' 
     return individual
     
 
@@ -195,88 +219,82 @@ def print_schedule(schedule):
 if __name__=='__main__':
     file_name='data.txt'
     N,M,t,g,s,c=input(file_name)
-    t1 = time.time()
+    t1=time.time()
     schedule=genetic_algorithm(N,days,shifts,M)
-    t2 = time.time()
-    ti = t2 - t1
-    with open('genetic_test.txt', 'a') as f:
-	f.write(str(ti) + " ")
-	
+    t2=time.time()
+    thoigian=t2-t1
+    
+    import random
+    
     def refine_schedule(schedule):
         schedule_info = [[[0 for room in range(M)] for shift in range(shifts)] for day in range(days)]
         teacher_info=[[[0 for teacher in range(len(t))] for shift in range(shifts)] for day in range(days)]
         for i in range(len(schedule)):
             for j in range(t[i]):
                 room = -1
-                for k in range(M):
-                    if c[k] >= s[i]:
-                        day, shift = schedule[i][j][0], schedule[i][j][1]
-                        if schedule_info[day][shift][k] == 0:
-                            room = k
+                for day in range(days-1, -1, -1):
+                    for shift in range(shifts-1, -1, -1):
+                        for k in range(M):
+                            if c[k] >= s[i] and schedule_info[day][shift][k] == 0 and teacher_info[day][shift][g[i]-1] == 0:
+                                room = k
+                                break
+                        if room != -1:
                             break
+                    if room != -1:
+                        break
                 if room == -1:
-                    
-                    iter=10
-                    max_iter=100
-                    while True:
-                        iter+=1
-                        if iter==max_iter:
-                            break
-                        day, shift = random.randint(0, days - 1), random.randint(0, shifts - 1)
-                        room = random.randint(0, M - 1)
-                        if c[room] >= s[i] and schedule_info[day][shift][room] == 0:
-                            break
+                    break
                 schedule[i][j] = day, shift, room
                 schedule_info[day][shift][room] = 1
-        for i in range(len(schedule)):
-            for j in range(t[i]):
-                day,shift,room=schedule[i][j]
-                if schedule_info[day][shift][room]==1:
-                    teacher_info[day][shift][g[i]-1]=1        
-                #same day,same shift in one class
-        for i in range(len(schedule)):
-            for j in range(t[i] - 1):
-                for k in range(j + 1, t[i]):
-                    if schedule[i][j][0] == schedule[i][k][0] and schedule[i][j][1] == schedule[i][k][1]:
-                        day, shift,room = schedule[i][k]
-                        for new_day in range(days):
-                            for new_shift in range(shifts):
-                                if (new_day,new_shift)!=(day,shift) and schedule_info[new_day][new_shift][room] == 0 and teacher_info[new_day][new_shift][g[i]-1]==0:
-                                    schedule[i][k] = new_day, new_shift, room
-                                    schedule_info[new_day][new_shift][room] = 1
-                                    teacher_info[new_day][new_shift][g[i]-1]=1
+                teacher_info[day][shift][g[i]-1]=1
+
+        while True:
+            schedule_changed = False
+            for i in range(len(schedule)):
+                for j in range(t[i] - 1):
+                    for k in range(j + 1, t[i]):
+                        if schedule[i][j][0] == schedule[i][k][0] and schedule[i][j][1] == schedule[i][k][1]:
+                            day, shift, room = schedule[i][k]
+                            for new_day in range(days):
+                                for new_shift in range(shifts):
+                                    if (new_day, new_shift) != (day, shift) and schedule_info[new_day][new_shift][room] == 0 and teacher_info[new_day][new_shift][g[i] - 1] == 0:
+                                        schedule[i][j] = new_day, new_shift, room
+                                        schedule_info[new_day][new_shift][room] = 1
+                                        teacher_info[new_day][new_shift][g[i] - 1] = 1
+                                        schedule_changed = True
+                                        break
+                                if schedule[i][j] != (day, shift, room):
                                     break
-                            if schedule[i][k] != (day, shift, room):
-                                break
-        #same teacher in same day,same shift
-        for i in range(len(schedule)-1):
-            for j in range(i + 1, len(schedule)):
-                if g[i]==g[j]:
-                    for q in range(t[i]):
-                        for k in range(t[j]):
-                            if schedule[i][q][0] == schedule[j][k][0] and schedule[i][q][1] == schedule[j][k][1]:
-                            
-                                day, shift,room = schedule[j][k]
-                                for new_day in range(days):
-                                    for new_shift in range(shifts):
-                                        if (new_day,new_shift)!=(day,shift) and schedule_info[new_day][new_shift][room] == 0 and teacher_info[new_day][new_shift][g[i]-1]==0:
-                                            schedule[j][k] = new_day,new_shift,room
-                                            schedule_info[new_day][new_shift][room] = 1
-                                            teacher_info[new_day][new_shift][g[i]-1] =1
-                                        break
-                                    if schedule[j][k] != (day, shift, room):
-                                        break
+            for i in range(len(schedule) - 1):
+                for j in range(i + 1, len(schedule)):
+                    if g[i] == g[j]:
+                        for q in range(t[i]):
+                            for k in range(t[j]):
+                                if schedule[i][q][0] == schedule[j][k][0] and schedule[i][q][1] == schedule[j][k][1]:
+                                    day, shift, room = schedule[j][k]
+                                    for new_day in range(days):
+                                        for new_shift in range(shifts):
+                                            if (new_day, new_shift) != (day, shift) and schedule_info[new_day][new_shift][room] == 0 and teacher_info[new_day][new_shift][g[i] - 1] == 0:
+                                                schedule[i][q] = new_day, new_shift, room
+                                                schedule_info[new_day][new_shift][room] = 1
+                                                teacher_info[new_day][new_shift][g[i] - 1] = 1
+                                                schedule_changed = True
+                                                break
+                                        if schedule[i][q] != (day, shift, room):
+                                            break
+            if not schedule_changed:
+                break
 
-
+        #Check the last time:
+        
         return schedule
 
 
 
 
 
-    original_schedule=schedule
     final_schedule=refine_schedule(schedule)
-    schedule=final_schedule
+    
 
         
                     
@@ -303,7 +321,7 @@ if __name__=='__main__':
                 if len(table[i][j]) > 0:
                     line += "|"
                     for tup in table[i][j]:
-                        line += "({:^1d},{:^1d},{:^1d})".format(tup[0]+1, tup[1], tup[2]+1)
+                        line += "({:^1d},{:^1d},{:^1d})".format(tup[0]+1, tup[1], tup[2])
 
                         line += ","
                     line = line[:-1]
@@ -315,9 +333,20 @@ if __name__=='__main__':
 
 
     print_table(table)
-    print_schedule(schedule)
+    
+    print_schedule(final_schedule)
+    print(fitness(final_schedule))
+    print(thoigian)
+    print('Maximum number of classes:',fitness_class(final_schedule))
 
-    print('Maximum number of classes:',fitness_class(schedule))
+
+
+
+
+
+
+
+
 
 
 
