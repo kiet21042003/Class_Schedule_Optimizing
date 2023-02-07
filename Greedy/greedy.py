@@ -22,6 +22,8 @@ def greedy(filename):
     timetable[info_class[-1]] = [] # timetable of class each class 
     for _ in range(info_class[0]): # If we loop this way, we will sure that each class has enough shift.
       x = select(info_class, state_room, state_teacher, rooms_sort)
+      if x == None:
+        continue
       timetable[info_class[-1]].append(x)
   return timetable
 
