@@ -10,5 +10,6 @@ Input:
 + The first line: N and M.
 + The next N line, each line write: t(i), g(i) and s(i).
 + The next line: c(1), c(2), …, c(n).
+
 Output: Timetable
 
