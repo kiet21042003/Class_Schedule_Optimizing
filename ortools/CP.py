@@ -102,7 +102,7 @@ def CP(filename):
         model.Add(sum(x[i,d,k,r] for d in range(5) for k in range(12) for r in range(M)) == t[i]).OnlyEnforceIf(c)
         model.Add(sum(x[i,d,k,r] for d in range(5) for k in range(12) for r in range(M)) <= t[i]).OnlyEnforceIf(c.Not())
 
-    Total_Shifts = {}
+    '''Total_Shifts = {}
     for i in range(N):
         for d in range(5):
             Total_Shifts[i, d] = model.NewIntVar(0, t[i], f'Total_Shifts[{i}, {d}]')
@@ -115,14 +115,11 @@ def CP(filename):
     Least_Shifts_Day = {}
     for i in range(N):
         Least_Shifts_Day[i] = model.NewIntVar(0, t[i], f'Least_Shifts_Day[{i}]')
-        model.AddMinEquality(Least_Shifts_Day[i], [Total_Shifts[i, d] for d in range(5)])
-
-    # The number of room switching times
-    # room_switch = model.NewIntVar(0, float('inf'), "room_switch")
+        model.AddMinEquality(Least_Shifts_Day[i], [Total_Shifts[i, d] for d in range(5)])'''
     
     # Objective function
 
-    model.Maximize(sum(y[i] for i in range(N)) - sum(Most_Shifts_Day[i] - Least_Shifts_Day[i] for i in range(N)))
+    model.Maximize(sum(y[i] for i in range(N)))
 
     # Create solver
     solver = cp_model.CpSolver()
