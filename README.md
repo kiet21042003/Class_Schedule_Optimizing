@@ -8,8 +8,11 @@ There are M rooms 1, 2, …, M and c[i] is the number of seats in the room i.
 In a week, there are 5 days (from Monday to Friday), each day is divided into 12 shifts (6 morning shifts and 6 afternoon shifts).
 
 Create a schedule (assign day, shift and room to each class) that satisfies:
+
 a. Two class having the same teacher need to be scheduled separately.
+
 b. The number of students in each class has to be smaller than the capacity of the room.
+
 c. The numbers of classes scheduled is maximized
 Input:
 + The first line: N and M.
