@@ -1,6 +1,8 @@
 import numpy as np
 import random
 import copy
+import time
+import random
 
 '''# Define the number of classes and rooms
 N = 10
@@ -193,9 +195,13 @@ def print_schedule(schedule):
 if __name__=='__main__':
     file_name='data.txt'
     N,M,t,g,s,c=input(file_name)
+    t1 = time.time()
     schedule=genetic_algorithm(N,days,shifts,M)
-    import random
-    
+    t2 = time.time()
+    t = t2 - t1
+    with open('genetic_test.txt', 'a') as f:
+	f.write(str(t) + " ")
+	
     def refine_schedule(schedule):
         schedule_info = [[[0 for room in range(M)] for shift in range(shifts)] for day in range(days)]
         teacher_info=[[[0 for teacher in range(len(t))] for shift in range(shifts)] for day in range(days)]
