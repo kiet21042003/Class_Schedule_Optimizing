@@ -198,9 +198,9 @@ if __name__=='__main__':
     t1 = time.time()
     schedule=genetic_algorithm(N,days,shifts,M)
     t2 = time.time()
-    t = t2 - t1
+    ti = t2 - t1
     with open('genetic_test.txt', 'a') as f:
-	f.write(str(t) + " ")
+	f.write(str(ti) + " ")
 	
     def refine_schedule(schedule):
         schedule_info = [[[0 for room in range(M)] for shift in range(shifts)] for day in range(days)]
