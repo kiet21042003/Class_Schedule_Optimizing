@@ -32,12 +32,22 @@ days = 5
 shifts = 12
 
 # Define the genetic algorithm parameters
-population_size = 5 #population_size is the number of individuals that make up one generation
-generations =5 #generations is the number of times the genetic algorithm goes through the process of creating a new generation.
+population_size = 8 #population_size is the number of individuals that make up one generation
+generations =8 #generations is the number of times the genetic algorithm goes through the process of creating a new generation.
 crossover_rate=0.8
 mutation_rate=0.11
 
-
+def find_max_number(N,days,shifts,M):
+    maximum_lesson=min(60*(max(g)+1),60*M)
+    while sum(t)>maximum_lesson:
+        max_lesson=max(t)
+        max_index=t.index(max_lesson)
+        t.pop(max_index)
+        g.pop(max_index)
+        s.pop(max_index)
+        N-=1
+        maximum_lesson=min(60*len(g),60*M)
+    return N
 # Define the initial population
 #population = [np.random.randint(0, M, size=(N, 3)) for _ in range(population_size)]
 '''Each individual in the population is represented by a 2D array of size Nx3, where N is the number of classes and 
@@ -111,31 +121,7 @@ def create_individual(N, days, shifts, M):
             class_lesson.append([day,shift,room]) 
             #this function means that the lesson j will take on (day,shift,room)
         individual.append(class_lesson)    
-    '''schedule_info1 = [[[0 for room in range(M)] for shift in range(shifts)] for day in range(days)]
     
-    for i in range(len(individual)):
-        for j in range(t[i]):
-            room = -1
-            for k in range(M):
-                if c[k] >= s[i]:
-                    day, shift = individual[i][j][0], individual[i][j][1]
-                    if schedule_info1[day][shift][k] == 0:
-                        room = k
-                        break
-            if room == -1:
-                    
-                iter=10
-                max_iter=100
-                while True:
-                    iter+=1
-                    if iter==max_iter:
-                        break
-                    day, shift = random.randint(0, days - 1), random.randint(0, shifts - 1)
-                    room = random.randint(0, M - 1)
-                    if c[room] >= s[i] and schedule_info1[day][shift][room] == 0:
-                        break
-            individual[i][j] = day, shift, room
-            schedule_info1[day][shift][room] = 1''' 
     return individual
     
 
@@ -219,10 +205,12 @@ def print_schedule(schedule):
 if __name__=='__main__':
     file_name='data.txt'
     N,M,t,g,s,c=input(file_name)
-    t1=time.time()
+    N=find_max_number(N,days,shifts,M)
+    
+    
     schedule=genetic_algorithm(N,days,shifts,M)
-    t2=time.time()
-    thoigian=t2-t1
+    
+    
     
     import random
     
@@ -292,20 +280,25 @@ if __name__=='__main__':
 
 
 
-
+    t1=time.time()
     final_schedule=refine_schedule(schedule)
-    
-
-        
-                    
-
-    
-    
+    while fitness(final_schedule)<0:
+        max_lesson=max(t)
+        max_index=t.index(max_lesson)
+        t.pop(max_index)
+        g.pop(max_index)
+        s.pop(max_index)
+        N-=1
+        schedule=genetic_algorithm(N,days,shifts,M)
+        final_schedule=refine_schedule(schedule)
+    t2=time.time()
+    thoigian=t2-t1
+   
     table = [[[] for j in range(shifts)] for i in range(days)]
 
     for i in range(N):
         for j in range(t[i]):
-            day, shift, room = schedule[i][j]
+            day, shift, room = final_schedule[i][j]
             table[day-1][shift-1].append((room, g[i], i+1))
     def print_table(table):
     # Print the header
@@ -335,9 +328,33 @@ if __name__=='__main__':
     print_table(table)
     
     print_schedule(final_schedule)
-    print(fitness(final_schedule))
+    print('Number of conflict: ',fitness(final_schedule))
     print(thoigian)
+    with open('genetic_test.txt', 'a') as f:
+        f.write(str(thoigian) + " ")
     print('Maximum number of classes:',fitness_class(final_schedule))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
