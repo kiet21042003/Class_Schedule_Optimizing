@@ -1,4 +1,5 @@
 from ortools.linear_solver import pywraplp
+import time
 
 def schedule_classes(n, m, classes, rooms):
     solver = pywraplp.Solver('schedule_classes', pywraplp.Solver.CBC_MIXED_INTEGER_PROGRAMMING)
@@ -66,10 +67,13 @@ def schedule_classes(n, m, classes, rooms):
     return len(result)
 
 if __name__ == '__main__':
-    with open("nhapfilenamevaoday.txt", "r") as file:
+    with open("/content/sample_data/data cua thay.txt", "r") as file:
      n, m = map(int, file.readline().split())
      classes = [list(map(int, file.readline().split())) for _ in range(n)]
      rooms = list(map(int, file.readline().split()))
-
+    t1 = time.time()
     result = schedule_classes(n, m, classes, rooms)
     print('Number of classes have been scheduled: ', result)
+    t2 = time.time()
+    t = t2 - t1
+    print('The running time is: ', t)
