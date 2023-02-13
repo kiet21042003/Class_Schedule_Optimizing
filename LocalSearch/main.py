@@ -19,19 +19,10 @@ if __name__ == "__main__":
     inits = random_initialize(classes, rooms, num_of_inits)
     num_of_iterations = 200
 
-    hill = 1
-
-    if hill: 
-        with open(output_file, "w") as f:
-            f.write("HILL CLIMBING \n")
-        solution, score, candidate_scores = iterated_hill_climbing(inits, num_of_iterations, 
-        classes, rooms, teachers)
-    
-    else: 
-        with open(output_file, "w") as f:
-            f.write("SIMULATED ANNEALING \n")
-        solution, score, candidate_scores = iterated_simulated_annealing(inits, num_of_iterations, 
-        classes, rooms, teachers)
+    with open(output_file, "w") as f:
+        f.write("HILL CLIMBING \n")
+    solution, score, candidate_scores = iterated_hill_climbing(inits, num_of_iterations, 
+    classes, rooms, teachers)
     
     print(*candidate_scores)
     print("Best Score: " + str(score))
