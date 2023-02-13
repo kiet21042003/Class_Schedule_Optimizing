@@ -1,6 +1,5 @@
 from src.generate_initialize import random_initialize
 from src.hill_climbing import iterated_hill_climbing
-from src.simulated_annealing import iterated_simulated_annealing
 from read_data import read_data
 
 
