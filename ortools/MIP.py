@@ -1,79 +1,129 @@
 from ortools.linear_solver import pywraplp
-import time
 
-def schedule_classes(n, m, classes, rooms):
+def Time(d):
+    days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+    return days[d]
+
+def solve_timetabling(n,m,t,g,s,rooms):
     solver = pywraplp.Solver('schedule_classes', pywraplp.Solver.CBC_MIXED_INTEGER_PROGRAMMING)
 
-    # Create variables for each class and each time slot: 
+    inf=solver.infinity()
+
+    # binary variables indicating if class i is assigned to room r at day d, period p
     x = {}
     for i in range(n):
-        x[i] = {}
-        for j in range(60):
-            x[i][j] = solver.IntVar(0, 1, f'class_{i}_slot_{j}')
-
-    # Create variables for each room and each time slot
-    y = {}
-    for i in range(m):
-        y[i] = {}
-        for j in range(60):
-            y[i][j] = solver.IntVar(0, 1, f'room_{i}_slot_{j}')
-
-    # Constraint 1: Classes taught by the same teacher are assigned to different time slots
-    for teacher in range(1, 101):
-        for day in range(5):
-            for time_slot in range(12):
-                indices = [i for i in range(n) if classes[i][1] == teacher]
-                solver.Add(sum(x[i][12 * day + time_slot] for i in indices) <= 1)
-
-    # Constraint 2: The number of students in a class is less than or equal to the capacity of the room
-    for i in range(n):
-        for j in range(60):
-            solver.Add(sum(y[k][j] for k in range(m) if rooms[k] >= classes[i][2]) >= x[i][j])
-
-    #Contraint 3: A class can only be scheduled once:
-    for i in range(n):
-      solver.Add(sum(x[i][j] for j in range(60)) <= classes[i][0])
-
-    #constraint 4: A room can only be assigned to one class:
-    for j in range(60):
-      solver.Add(sum(y[k][j] for k in range(m)) <=1)
+        for r in range(m):
+            for d in range(5):
+              for p in range(12):
+                x[i,r,d,p] = solver.IntVar(0, 1, 'x[%d,%d,%d,%d]' % (i, r, d, p))
     
-    #constraint 5: A class must be scheduled at t[i] constructive period
-
-
-     # Constraint 3: The class i must be scheduled from period j to period j + t[i]
+    y={}
     for i in range(n):
-        for j in range(60):
-            if j + classes[i][0] > 60:
-                continue
-            solver.Add(sum(x[i][k] for k in range(j, j + classes[i][0])) <= classes[i][0])
-    # Constraint 4: The number of classes scheduled is maximized
+      y[i]=solver.IntVar(0,1,'y[%d]' % (i))
+    
+    #constraint 1: a teacher can only teach one class at a moment
+    teachers={}
+    G=set(g)
+
+    for i in G: 
+      teachers[i]=[j for j in range(n) if g[j]==i]
+
+    for teacher in teachers:
+      for d in range(5):
+        for p in range(12):
+          c=solver.Constraint(0,1) 
+          for r in range(m):
+            for i in teachers[teacher]:
+              c.SetCoefficient(x[i,r,d,p],1)
+    
+    #constraint 2:The number of students is less than the room's capacity
+    for i in range(n):
+      for r in range(m):
+       if s[i] > rooms[r]:
+        for d in range(5):
+         for p in range(12):
+           cstr = solver.Constraint(0, 0)
+           cstr.SetCoefficient(x[i,r,d,p], 1)
+
+    #constraint 3: There can be only one class at one room
+    for r in range(m):
+      for d in range(5):
+        for p in range(12):
+          cstr=solver.Constraint(0,1)
+          for i in range(n):
+            cstr.SetCoefficient(x[i,r,d,p],1)
+    
+    #value for y 
+    for i in range(n):
+     c = solver.Constraint(t[i], t[i])
+    for r in range(m):
+        for d in range(5):
+            for p in range(12):
+                c.SetCoefficient(x[i, r, d, p], 1)
+    c.SetCoefficient(y[i], -t[i])
+
+    # create variables for total shifts for each class and day
+    Total_Shifts = {}
+    for i in range(n):
+        for d in range(5):
+            Total_Shifts[i, d] = solver.IntVar(0, t[i], f'Total_Shifts[{i}, {d}]')
+
+    ## create variables for most shifts per day for each class
+    Most_Shifts_Day = {}
+    for i in range(n):
+       Most_Shifts_Day[i]=solver.IntVar(0,t[i],f'Most_Shifts_Day[{i}]')
+    
+    # create constraint to ensure that Most_Shifts_Day[i]
+    # is the maximum value of Total_Shifts[i,d] for d in range(5)
+    for i in range(n):
+      max_cstr=solver.Constraint(0,t[i])
+      for d in range(5):
+        max_cstr.SetCoefficient(Total_Shifts[i,d],1)
+      max_cstr.SetCoefficient(Most_Shifts_Day[i],-1)
+   
+   #create variables for least shifts per day for each class
+    Least_Shifts_Day = {}
+    for i in range(n):
+      Least_Shifts_Day[i]=solver.IntVar(0,t[i],f'Least_Shifts_Day[{i}]')
+  
+	  # create constraint to ensure that Least_Shifts_Day[i] is the minimum value of Total_Shifts[i,d] for d in range(5)
+    for i in range(n):
+      min_cstr = solver.Constraint(0, t[i])
+      for d in range(5):
+        min_cstr.SetCoefficient(Total_Shifts[i, d], 1)
+      min_cstr.SetCoefficient(Least_Shifts_Day[i], -1)
+      solver.Add(Least_Shifts_Day[i] >= 1)
+
+    #objective function:
     objective = solver.Objective()
     for i in range(n):
-        for j in range(60):
-            objective.SetCoefficient(x[i][j], 1)
+     objective.SetCoefficient(y[i], 1)
+     objective.SetCoefficient(Most_Shifts_Day[i], -1)
+     objective.SetCoefficient(Least_Shifts_Day[i], 1)
     objective.SetMaximization()
-
     solver.Solve()
 
-    # Extract the solution
-    result = []
+    #print the solution:
     for i in range(n):
-        for j in range(60):
-            if x[i][j].solution_value() == 1:
-                result.append((i, j, [k for k in range(m) if y[k][j].solution_value() == 1][0]))
-                break
-
-    return len(result)
-
+        for r in range(m):
+            for d in range(5):
+                for p in range(12):
+                    if x[i,r,d,p].solution_value() == 1:
+                        day=Time(d)
+                        print(f'Class {i} is assigned to room {r} on day {day} at period {p}')
+    count=0
+    for i in range(n):
+        if y[i].solution_value() == 1:
+            count+=1
+    print(f"Number of classes scheduled: {count}")
+    print(objective.Value())
+ 
 if __name__ == '__main__':
-    with open("/content/sample_data/data cua thay.txt", "r") as file:
-     n, m = map(int, file.readline().split())
-     classes = [list(map(int, file.readline().split())) for _ in range(n)]
-     rooms = list(map(int, file.readline().split()))
-    t1 = time.time()
-    result = schedule_classes(n, m, classes, rooms)
-    print('Number of classes have been scheduled: ', result)
-    t2 = time.time()
-    t = t2 - t1
-    print('The running time is: ', t)
+    n, m = map(int, input().split())
+    classes = [list(map(int, input().split())) for _ in range(n)]
+    rooms = list(map(int, input().split()))
+    t=[classes[i][0] for i in range(n)]
+    g=[classes[i][1] for i in range(n)]
+    s=[classes[i][2] for i in range(n)]
+    solve_timetabling(n,m,t,g,s,rooms)
+
