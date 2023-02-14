@@ -58,6 +58,20 @@ def CP(filename):
              for r in range(M):
                 model.Add(sum(x[i,d,k,r] \
                     for i in range(N)) <= 1)
+                
+    #A room can only be assigned to one class in a moment:
+    for d in range(5):
+        for k in range(12):
+             for i in range(N):
+                model.Add(sum(x[i,d,k,r] \
+                    for r in range(M)) <= 1)
+
+                
+    ## The total number of times that class i is scheduled in the timetable must be less than the number of lessons for class i (t[i]). 
+    ## This ensures that the class is not scheduled more times than it should be
+    for i in range(N):
+        model.Add(sum(x[i,d,k,r] \
+             for d in range(5) for k in range(12) for r in range(M)) <= t[i])
     
     ## Value for y 
     for i in range(N):
@@ -105,7 +119,7 @@ def CP(filename):
         print("No solution")
 
 if __name__ == '__main__':
-    filename = "data.txt"
+    filename = "filename.txt"
     t1 = time.time()
     CP(filename)
     t2 = time.time()
