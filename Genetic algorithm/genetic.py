@@ -38,7 +38,7 @@ crossover_rate=0.8
 mutation_rate=0.11
 
 def find_max_number(N,days,shifts,M):
-    maximum_lesson=min(60*(max(g)+1),60*M)
+    maximum_lesson=min(60*(max(g)),60*M)
     while sum(t)>maximum_lesson:
         max_lesson=max(t)
         max_index=t.index(max_lesson)
@@ -46,7 +46,7 @@ def find_max_number(N,days,shifts,M):
         g.pop(max_index)
         s.pop(max_index)
         N-=1
-        maximum_lesson=min(60*len(g),60*M)
+        maximum_lesson=min(60*max(g),60*M)
     return N
 # Define the initial population
 #population = [np.random.randint(0, M, size=(N, 3)) for _ in range(population_size)]
